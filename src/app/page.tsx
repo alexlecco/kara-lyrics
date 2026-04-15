@@ -1,66 +1,117 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import { useState } from 'react';
 
 export default function Home() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [videoId, setVideoId] = useState('');
+
+  const extractVideoId = (url: string): string | null => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    return match ? match[1] : null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = extractVideoId(url);
+    
+    if (!id) {
+      setError('Invalid YouTube URL');
+      return;
+    }
+    
+    setError('');
+    setLoading(true);
+    setVideoId(id);
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setLoading(false);
+    window.location.href = `/upload?videoId=${id}`;
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h1 style={styles.title}>Kara-lyrics</h1>
+        <p style={styles.subtitle}>Create animated lyric videos from YouTube</p>
+        
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Paste YouTube URL..."
+            style={styles.input}
+          />
+          <button type="submit" disabled={loading} style={styles.button}>
+            {loading ? 'Processing...' : 'Create Video'}
+          </button>
+        </form>
+        
+        {error && <p style={styles.error}>{error}</p>}
+      </div>
     </div>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#0a0a0a',
+    color: '#fff',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+  card: {
+    width: '100%',
+    maxWidth: '480px',
+    padding: '48px 32px',
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: '48px',
+    fontWeight: '300',
+    margin: '0 0 8px',
+    letterSpacing: '-2px',
+  },
+  subtitle: {
+    fontSize: '16px',
+    color: '#666',
+    margin: '0 0 40px',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  input: {
+    padding: '16px 20px',
+    fontSize: '16px',
+    border: '1px solid #333',
+    borderRadius: '8px',
+    background: '#111',
+    color: '#fff',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  },
+  button: {
+    padding: '16px 24px',
+    fontSize: '16px',
+    fontWeight: '500',
+    border: 'none',
+    borderRadius: '8px',
+    background: '#fff',
+    color: '#000',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s',
+  },
+  error: {
+    color: '#ff4444',
+    fontSize: '14px',
+    marginTop: '16px',
+  },
+};
