@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 
@@ -9,12 +9,28 @@ export default function UploadPage() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get('videoId');
   const { job, isProcessing, processVideo, reset } = useVideoGenerator();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (videoId && !job) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && videoId && !job) {
       processVideo(`https://youtube.com/watch?v=${videoId}`);
     }
-  }, [videoId, job, processVideo]);
+  }, [mounted, videoId, job, processVideo]);
+
+  if (!mounted) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Kara-lyrics</h1>
+          <div style={styles.loading}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!videoId) {
     return (
@@ -165,5 +181,9 @@ const styles: Record<string, React.CSSProperties> = {
   link: {
     color: '#fff',
     fontSize: '14px',
+  },
+  loading: {
+    color: '#666',
+    fontSize: '16px',
   },
 };
