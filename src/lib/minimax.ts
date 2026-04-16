@@ -1,5 +1,3 @@
-import { getLyricsWithTiming } from './moises';
-
 export interface VideoGenerationRequest {
   prompt: string;
   duration?: number;

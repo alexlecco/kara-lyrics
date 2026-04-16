@@ -1,41 +1,20 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 
 export default function UploadPage() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get('videoId');
-  const [status, setStatus] = useState('initializing');
-  const [progress, setProgress] = useState(0);
+  const { job, isProcessing, processVideo, reset } = useVideoGenerator();
 
   useEffect(() => {
-    if (!videoId) return;
-
-    const processVideo = async () => {
-      setStatus('downloading');
-      setProgress(10);
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setStatus('processing');
-      setProgress(30);
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setStatus('generating');
-      setProgress(60);
-
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      setStatus('finalizing');
-      setProgress(90);
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProgress(100);
-      setStatus('complete');
-    };
-
-    processVideo();
-  }, [videoId]);
+    if (videoId && !job) {
+      processVideo(`https://youtube.com/watch?v=${videoId}`);
+    }
+  }, [videoId, job, processVideo]);
 
   if (!videoId) {
     return (
@@ -47,13 +26,18 @@ export default function UploadPage() {
   }
 
   const statusMessages: Record<string, string> = {
-    initializing: 'Initializing...',
+    idle: 'Initializing...',
     downloading: 'Downloading audio from YouTube...',
-    processing: 'Separating stems with Moises AI...',
-    generating: 'Generating video with MiniMax...',
-    finalizing: 'Combining lyrics with video...',
+    processing_stems: 'Separating stems with Moises AI...',
+    transcribing_lyrics: 'Transcribing lyrics...',
+    generating_video: 'Generating video with MiniMax...',
+    combining: 'Combining lyrics with video...',
     complete: 'Video ready!',
+    error: 'An error occurred',
   };
+
+  const currentStatus = job?.status || 'idle';
+  const currentProgress = job?.progress || 0;
 
   return (
     <div style={styles.container}>
@@ -67,15 +51,31 @@ export default function UploadPage() {
         
         <div style={styles.progressContainer}>
           <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+            <div style={{ ...styles.progressFill, width: `${currentProgress}%` }} />
           </div>
-          <p style={styles.status}>{statusMessages[status]}</p>
+          <p style={styles.status}>{statusMessages[currentStatus]}</p>
+          
+          {job?.error && (
+            <p style={styles.error}>{job.error}</p>
+          )}
         </div>
 
-        {status === 'complete' && (
-          <Link href={`/result?videoId=${videoId}`} style={styles.button}>
+        {currentStatus === 'complete' && (
+          <Link 
+            href={`/result?videoId=${videoId}&videoUrl=${encodeURIComponent(job?.videoUrl || '')}`} 
+            style={styles.button}
+          >
             View Result
           </Link>
+        )}
+
+        {currentStatus === 'error' && (
+          <div style={styles.actions}>
+            <button onClick={() => processVideo(`https://youtube.com/watch?v=${videoId}`)} style={styles.button}>
+              Try Again
+            </button>
+            <Link href="/" style={styles.buttonSecondary}>Start Over</Link>
+          </div>
         )}
       </div>
     </div>
@@ -130,6 +130,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#666',
     margin: 0,
   },
+  error: {
+    color: '#ff4444',
+    fontSize: '14px',
+    marginTop: '12px',
+  },
   button: {
     display: 'inline-block',
     padding: '16px 24px',
@@ -140,6 +145,22 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '8px',
     background: '#fff',
     color: '#000',
+    cursor: 'pointer',
+  },
+  buttonSecondary: {
+    display: 'inline-block',
+    padding: '16px 24px',
+    fontSize: '16px',
+    fontWeight: '500',
+    textDecoration: 'none',
+    border: '1px solid #333',
+    borderRadius: '8px',
+    color: '#fff',
+    marginLeft: '12px',
+  },
+  actions: {
+    display: 'flex',
+    justifyContent: 'center',
   },
   link: {
     color: '#fff',
