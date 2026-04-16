@@ -7,11 +7,20 @@ import Link from 'next/link';
 export default function ResultPage() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get('videoId');
+  const videoUrl = searchParams.get('videoUrl');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleDownload = () => {
+    if (videoUrl) {
+      window.open(videoUrl, '_blank');
+    } else {
+      alert('Video not available yet. Please try again.');
+    }
+  };
 
   if (!mounted) {
     return (
@@ -52,7 +61,7 @@ export default function ResultPage() {
         <p style={styles.success}>Your karaoke video is ready!</p>
         
         <div style={styles.actions}>
-          <button style={styles.buttonPrimary}>Download Video</button>
+          <button onClick={handleDownload} style={styles.buttonPrimary}>Download Video</button>
           <Link href="/" style={styles.buttonSecondary}>Create Another</Link>
         </div>
       </div>
