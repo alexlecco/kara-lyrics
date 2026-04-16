@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [videoId, setVideoId] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const extractVideoId = (url: string): string | null => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
@@ -24,12 +28,21 @@ export default function Home() {
     
     setError('');
     setLoading(true);
-    setVideoId(id);
 
     await new Promise(resolve => setTimeout(resolve, 2000));
     setLoading(false);
     window.location.href = `/upload?videoId=${id}`;
   };
+
+  if (!mounted) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.loading}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -113,5 +126,9 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#ff4444',
     fontSize: '14px',
     marginTop: '16px',
+  },
+  loading: {
+    color: '#666',
+    fontSize: '16px',
   },
 };

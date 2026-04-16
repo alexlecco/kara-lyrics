@@ -1,11 +1,28 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function ResultPage() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get('videoId');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Kara-lyrics</h1>
+          <div style={styles.loading}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!videoId) {
     return (
@@ -118,5 +135,9 @@ const styles: Record<string, React.CSSProperties> = {
   link: {
     color: '#fff',
     fontSize: '14px',
+  },
+  loading: {
+    color: '#666',
+    fontSize: '16px',
   },
 };
